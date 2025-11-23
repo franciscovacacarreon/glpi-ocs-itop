@@ -3,7 +3,8 @@ version: '3.8'
 services:
   # GLPI
   glpi:
-    build: .
+    image: diouxx/glpi
+    # build: .
     container_name: glpi
     ports:
       - "8081:80"
