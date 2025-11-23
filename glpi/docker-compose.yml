@@ -11,6 +11,7 @@ services:
       - ./glpi:/var/www/html
       - ./glpi/files:/var/www/html/files
       - ./glpi/config:/var/www/html/config
+      - ./glpi/plugins:/var/www/html/glpi/plugins
     depends_on:
       - glpi_db
     networks:
