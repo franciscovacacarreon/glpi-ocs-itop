@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  # GLPI
+  glpi:
+    build: ./glpi
+    container_name: glpi
+    ports:
+      - "8081:80"
+    volumes:
+      - ./glpi:/var/www/html
+      - ./glpi/files:/var/www/html/files
+      - ./glpi/config:/var/www/html/config
+    depends_on:
+      - glpi_db
+    networks:
+      - glpi-net
+    restart: unless-stopped
+
+  glpi_db:
+    image: mysql:8.0
+    container_name: glpi_db
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: glpidb
+      MYSQL_USER: glpi
+      MYSQL_PASSWORD: glpipassword
+    volumes:
+      - glpi_db_data:/var/lib/mysql
+    networks:
+      - glpi-net
+    restart: unless-stopped
+
+  # iTop
+  itop:
+    build: ./itop
+    container_name: itop
+    ports:
+      - "8085:80"
+    volumes:
+      - ./itop:/var/www/html
+      - ./itop/conf:/var/www/html/conf
+      - ./itop/data:/var/www/html/data
+      - ./itop/extensions:/var/www/html/extensions
+    depends_on:
+      - itop_db
+    networks:
+      - glpi-net
+    restart: unless-stopped
+
+  itop_db:
+    image: mysql:8.0
+    container_name: itop_db
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: itopdb
+      MYSQL_USER: itop
+      MYSQL_PASSWORD: itoppassword
+    volumes:
+      - itop_db_data:/var/lib/mysql
+    networks:
+      - glpi-net
+    restart: unless-stopped
+
+  # OCS Inventory
+  ocs_db:
+    image: mysql:5.7
+    container_name: ocs_db
+    environment:
+      MYSQL_ROOT_PASSWORD: mysqlocs
+      MYSQL_USER: ocsinventory
+      MYSQL_PASSWORD: ocsinventory
+      MYSQL_DATABASE: ocsweb
+    volumes:
+      - ocs_db_data:/var/lib/mysql
+    networks:
+      - glpi-net
+    restart: unless-stopped
+
+  ocs_web:
+    image: slllaps/ocs-inventory:2.3
+    container_name: ocs_web
+    environment:
+      ENV_OCS_DB_HOST: ocs_db
+      ENV_OCS_DB_PORT: 3306
+      ENV_OCS_DB_NAME: ocsweb
+      ENV_OCS_DB_LOCAL: ocsweb
+      ENV_OCS_DB_USER: ocsinventory
+      ENV_OCS_DB_PWD: ocsinventory
+    volumes:
+      - ocs_web_data:/usr/share/ocsinventory-reports/ocsreports
+    ports:
+      - "8083:80"
+    depends_on:
+      - ocs_db
+    networks:
+      - glpi-net
+    restart: unless-stopped
+
+volumes:
+  glpi_db_data:
+  itop_db_data:
+  ocs_db_data:
+  ocs_web_data:
+
+networks:
+  glpi-net:
+    driver: bridge
