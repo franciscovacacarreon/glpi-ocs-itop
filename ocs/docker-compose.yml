@@ -1,42 +1,42 @@
-version: '2'
+version: '3.8'
 
 services:
-  db-ocs:
-    image: mysql:5.7
-    container_name: db-ocs
-    volumes:
-      - db-data:/var/lib/mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: mysqlocs
-      MYSQL_USER: ocsinventory
-      MYSQL_PASSWORD: ocsinventory
-      MYSQL_DATABASE: ocsweb
-    networks:
-      - glpi-ocs-net
-
-  web-ocs:
-    image: slllaps/ocs-inventory:2.3
-    container_name: web-ocs
-    volumes:
-      - web-data:/usr/share/ocsinventory-reports/ocsreports
-    environment:
-      ENV_OCS_DB_HOST: db-ocs
-      ENV_OCS_DB_PORT: 3306
-      ENV_OCS_DB_NAME: ocsweb
-      ENV_OCS_DB_LOCAL: ocsweb
-      ENV_OCS_DB_USER: ocsinventory
-      ENV_OCS_DB_PWD: ocsinventory
+  # GLPI
+  glpi:
+    image: diouxx/glpi
+    container_name: glpi
     ports:
-      - "8082:80"
+      - "8081:80"
+    volumes:
+      - ./glpi:/var/www/html
+      - ./glpi/files:/var/www/html/files
+      - ./glpi/config:/var/www/html/config
     depends_on:
-      - db-ocs
+      - glpi_db
     networks:
-      - glpi-ocs-net
+      - glpi-net
+    restart: unless-stopped
+
+  glpi_db:
+    image: mariadb:10.6
+    container_name: glpi_db
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: glpidb
+      MYSQL_USER: glpi
+      MYSQL_PASSWORD: glpipassword
+    volumes:
+      - glpi_db_data:/var/lib/mysql
+    networks:
+      - glpi-net
+    restart: unless-stopped
 
 volumes:
-  db-data:
-  web-data:
+  glpi_db_data:
 
 networks:
-  glpi-ocs-net:
+  glpi-net:
     driver: bridge
